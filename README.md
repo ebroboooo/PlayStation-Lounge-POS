@@ -1,32 +1,84 @@
-# React + TypeScript + Vite
+# LoungeLink POS
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A modern offline-first PlayStation Lounge Management System built with React, TypeScript, TailwindCSS, and IndexedDB.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+LoungeLink POS is designed for PlayStation lounges and gaming centers that need a fast and reliable way to manage room sessions, inventory, receipts, and reports.
 
-## React Compiler
+The system works completely offline and is designed for future migration to cloud platforms such as Firebase.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the Oxlint configuration
+### Room Management
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+* Real-time room timers
+* Start, pause, resume and end sessions
+* Room-specific hourly pricing
+* Maintenance mode
+* Custom room names
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+### Inventory Management
+
+* Drinks, snacks and accessories
+* Stock tracking
+* Low stock alerts
+* Favorite items for quick access
+
+### Checkout & Receipts
+
+* Automatic time calculation
+* Item billing
+* Discounts
+* Thermal receipt support
+* Receipt history
+
+### Reports
+
+* Daily revenue
+* Session statistics
+* Payment method breakdown
+* Export functionality
+
+### Multi-language Support
+
+* English
+* Arabic
+* RTL Support
+
+### Offline First
+
+* IndexedDB Storage
+* Automatic persistence
+* Backup and restore support
+
+## Technology Stack
+
+* React
+* TypeScript
+* Vite
+* TailwindCSS
+* IndexedDB
+
+## Future Roadmap
+
+* Firebase Synchronization
+* Multi-device Support
+* Cloud Backups
+* User Authentication
+* WhatsApp Notifications
+
+## Screenshots
+
+Add screenshots here after deployment.
+
+## Installation
+
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## License
+
+Portfolio Project by Ebram Sherif

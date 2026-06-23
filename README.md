@@ -70,7 +70,27 @@ The system works completely offline and is designed for future migration to clou
 
 ## Screenshots
 
-Add screenshots here after deployment.
+## Screenshots
+
+### Dashboard
+
+![Dashboard](screenshots/Dashboard.JPG)
+
+### Inventory
+
+![Inventory](screenshots/inventory.JPG)
+
+### Checkout
+
+![Checkout](screenshots/checkout.png)
+
+### Reports
+
+![Reports](screenshots/recipts.jpg)
+
+### Settings
+
+![Settings](screenshots/settings.jpg)
 
 ## Installation
 

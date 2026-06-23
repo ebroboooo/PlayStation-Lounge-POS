@@ -1,0 +1,18 @@
+{
+  "name": "Villa 30 PlayStation Lounge POS System",
+  "short_name": "Villa 30 POS",
+  "description": "Offline-first POS management system for Villa 30 PlayStation Lounge.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

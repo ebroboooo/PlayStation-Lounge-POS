@@ -4,52 +4,56 @@ A modern offline-first PlayStation Lounge Management System built with React, Ty
 
 ## Overview
 
-LoungeLink POS is designed for PlayStation lounges and gaming centers that need a fast and reliable way to manage room sessions, inventory, receipts, and reports.
+LoungeLink POS is a complete management solution for PlayStation lounges and gaming centers. The system allows operators to manage room sessions, track inventory, generate receipts, monitor revenue, and operate entirely offline without requiring an internet connection.
 
-The system works completely offline and is designed for future migration to cloud platforms such as Firebase.
+Designed with future scalability in mind, the architecture supports migration to cloud platforms such as Firebase while maintaining full offline functionality.
 
-## Features
+## Key Features
 
 ### Room Management
 
 * Real-time room timers
-* Start, pause, resume and end sessions
+* Start, pause, resume, and end sessions
 * Room-specific hourly pricing
 * Maintenance mode
-* Custom room names
+* Custom room names and categories
+* Live session tracking
 
 ### Inventory Management
 
-* Drinks, snacks and accessories
-* Stock tracking
+* Inventory categories
+* Stock quantity tracking
 * Low stock alerts
 * Favorite items for quick access
+* Product management dashboard
 
 ### Checkout & Receipts
 
-* Automatic time calculation
+* Automatic session cost calculation
 * Item billing
-* Discounts
-* Thermal receipt support
+* Discount support
+* Receipt generation
+* Thermal printer support
 * Receipt history
 
-### Reports
+### Reporting & Analytics
 
-* Daily revenue
+* Revenue tracking
 * Session statistics
 * Payment method breakdown
-* Export functionality
+* Business performance reporting
 
-### Multi-language Support
+### Multi-Language Support
 
 * English
 * Arabic
-* RTL Support
+* RTL (Right-To-Left) Support
 
-### Offline First
+### Offline First Architecture
 
-* IndexedDB Storage
-* Automatic persistence
+* IndexedDB local storage
+* Persistent data storage
+* Automatic recovery after refresh
 * Backup and restore support
 
 ## Technology Stack
@@ -60,37 +64,39 @@ The system works completely offline and is designed for future migration to clou
 * TailwindCSS
 * IndexedDB
 
-## Future Roadmap
-
-* Firebase Synchronization
-* Multi-device Support
-* Cloud Backups
-* User Authentication
-* WhatsApp Notifications
-
 ## Screenshots
 
-## Screenshots
+### Admin Dashboard
 
-### Dashboard
+![Admin Dashboard](screenshots/dashboardadmin.JPG)
 
-![Dashboard](screenshots/Dashboard.JPG)
+### Cashier Dashboard
 
-### Inventory
+![Cashier Dashboard](screenshots/Dashboard%20cashier.JPG)
+
+### Inventory Management
 
 ![Inventory](screenshots/inventory.JPG)
 
 ### Checkout
 
-![Checkout](screenshots/checkout.png)
+![Checkout](screenshots/checkout.PNG)
 
-### Reports
+### Receipts
 
-![Reports](screenshots/recipts.jpg)
+![Receipts](screenshots/recipts.JPG)
 
 ### Settings
 
-![Settings](screenshots/settings.jpg)
+![Settings](screenshots/settings.JPG)
+
+### Statistics
+
+![Statistics](screenshots/statics.JPG)
+
+### Audit Logs
+
+![Audit Logs](screenshots/logs.JPG)
 
 ## Installation
 
@@ -98,6 +104,15 @@ The system works completely offline and is designed for future migration to clou
 npm install
 npm run dev
 ```
+
+## Future Roadmap
+
+* Firebase synchronization
+* Multi-device support
+* Cloud backups
+* User authentication
+* Mobile companion application
+* WhatsApp integration
 
 ## License
 

@@ -1,119 +1,107 @@
+<p align="center">
+  <img src="screenshots/banner.png" alt="LoungeLink POS Banner" width="100%">
+</p>
+
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-Styling-38B2AC?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
+[![IndexedDB](https://img.shields.io/badge/IndexedDB-Offline%20Storage-orange?style=for-the-badge)](#)
+
 # LoungeLink POS
 
-A modern offline-first PlayStation Lounge Management System built with React, TypeScript, TailwindCSS, and IndexedDB.
+Modern offline-first PlayStation Lounge Management System for room control, inventory tracking, billing, and analytics.
 
-## Overview
+---
 
-LoungeLink POS is a complete management solution for PlayStation lounges and gaming centers. The system allows operators to manage room sessions, track inventory, generate receipts, monitor revenue, and operate entirely offline without requiring an internet connection.
+## 🚀 Overview
 
-Designed with future scalability in mind, the architecture supports migration to cloud platforms such as Firebase while maintaining full offline functionality.
+LoungeLink POS is a complete management system for gaming lounges and PlayStation centers.  
+It works fully offline using IndexedDB and is designed for future cloud scaling.
 
-## Key Features
+---
 
-### Room Management
+## ✨ Key Features
 
-* Real-time room timers
-* Start, pause, resume, and end sessions
-* Room-specific hourly pricing
-* Maintenance mode
-* Custom room names and categories
-* Live session tracking
+### 🎮 Room Management
+- Real-time session timers
+- Start / pause / resume / end sessions
+- Room pricing control
+- Maintenance mode
+- Live session tracking
 
-### Inventory Management
+### 📦 Inventory System
+- Stock tracking
+- Categories management
+- Low stock alerts
+- Quick access items
 
-* Inventory categories
-* Stock quantity tracking
-* Low stock alerts
-* Favorite items for quick access
-* Product management dashboard
+### 💳 Billing & Checkout
+- Automatic session calculation
+- Item billing system
+- Discounts support
+- Receipt generation
+- Thermal printer support
+- Receipt history
 
-### Checkout & Receipts
+### 📊 Analytics
+- Revenue tracking
+- Session statistics
+- Payment breakdowns
+- Business insights
 
-* Automatic session cost calculation
-* Item billing
-* Discount support
-* Receipt generation
-* Thermal printer support
-* Receipt history
+### 🌐 Multi-Language
+- English / Arabic
+- RTL support
 
-### Reporting & Analytics
+### 💾 Offline First
+- IndexedDB storage
+- Fully offline operation
+- Auto data recovery
+- Backup & restore support
 
-* Revenue tracking
-* Session statistics
-* Payment method breakdown
-* Business performance reporting
+---
 
-### Multi-Language Support
+## 🛠 Tech Stack
 
-* English
-* Arabic
-* RTL (Right-To-Left) Support
+- React
+- TypeScript
+- Vite
+- TailwindCSS
+- IndexedDB
 
-### Offline First Architecture
+---
 
-* IndexedDB local storage
-* Persistent data storage
-* Automatic recovery after refresh
-* Backup and restore support
+## 📸 Screenshots
 
-## Technology Stack
-
-* React
-* TypeScript
-* Vite
-* TailwindCSS
-* IndexedDB
-
-## Screenshots
-
-### Admin Dashboard
-
+### 🏠 Admin Dashboard
 ![Admin Dashboard](screenshots/dashboardadmin.JPG)
 
-### Cashier Dashboard
-
+### 👨‍💼 Cashier Dashboard
 ![Cashier Dashboard](screenshots/Dashboard%20cashier.JPG)
 
-### Inventory Management
-
+### 📦 Inventory Management
 ![Inventory](screenshots/inventory.JPG)
 
-### Checkout
-
+### 💳 Checkout System
 ![Checkout](screenshots/checkout.PNG)
 
-### Receipts
-
+### 🧾 Receipts
 ![Receipts](screenshots/recipts.JPG)
 
-### Settings
-
+### ⚙️ Settings
 ![Settings](screenshots/settings.JPG)
 
-### Statistics
-
+### 📊 Statistics
 ![Statistics](screenshots/statics.JPG)
 
-### Audit Logs
-
+### 🗂 Audit Logs
 ![Audit Logs](screenshots/logs.JPG)
 
-## Installation
+---
+
+## ⚙️ Installation
 
 ```bash
 npm install
 npm run dev
-```
-
-## Future Roadmap
-
-* Firebase synchronization
-* Multi-device support
-* Cloud backups
-* User authentication
-* Mobile companion application
-* WhatsApp integration
-
-## License
-
-Portfolio Project by Ebram Sherif

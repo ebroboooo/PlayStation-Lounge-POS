@@ -13,7 +13,7 @@ import { SettingsView } from './components/SettingsView';
 import { RefreshCw, Play, ShieldAlert } from 'lucide-react';
 
 const AppContent: React.FC = () => {
-  const { loading, rooms } = usePOS();
+  const { loading, currentShift } = usePOS();
   const { t, language } = useTranslation();
   const { role, canAccessAuditLogs, canChangeSettings } = useRole();
   const [activeTab, setActiveTab] = useState<string>('rooms');
@@ -61,7 +61,12 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col antialiased">
+    <div className="min-h-screen bg-zinc-950 flex flex-col antialiased relative">
+      {/* Start-of-day overlay when shift is closed */}
+      {!loading && !currentShift?.isOpen && (
+        <div className="fixed inset-0 z-20 bg-zinc-950/70 backdrop-blur-[2px] pointer-events-none" aria-hidden="true" />
+      )}
+
       {/* Top Navigation Header */}
       <Header />
 

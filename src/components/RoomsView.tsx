@@ -9,7 +9,8 @@ import {
   Gamepad2, Monitor, Crown, Sofa, Tv, 
   Play, Pause, Plus, ShieldAlert, Sparkles, 
   Clock, Package, PlusCircle, CheckCircle, 
-  Settings, ChevronRight, X, AlertCircle, Search 
+  Settings, ChevronRight, X, AlertCircle, Search,
+  Minus, Trash2
 } from 'lucide-react';
 
 export const RoomsView: React.FC = () => {
@@ -230,8 +231,27 @@ export const RoomsView: React.FC = () => {
                         className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 font-semibold p-2 border border-zinc-850 cursor-pointer"
                       >
                         <PlusCircle className="h-4 w-4" />
-                        {t('addItem')}
+                        {session && session.items.length > 0 ? t('manageItems') : t('addItem')}
                       </button>
+                      {session && session.items.length > 0 && (
+                        <div className="mt-2 space-y-1 max-h-20 overflow-y-auto">
+                          {session.items.map(item => (
+                            <div key={item.itemId} className="flex items-center justify-between text-[10px] font-mono text-zinc-500 px-1">
+                              <span className="truncate flex-1">
+                                {item.quantity}x {language === 'ar' ? item.nameArabic : item.nameEnglish}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeSessionItem(room.id, item.itemId, 1)}
+                                className="ml-1 p-0.5 text-zinc-600 hover:text-rose-400 cursor-pointer shrink-0"
+                                title={t('removeItem')}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -578,12 +598,51 @@ export const RoomsView: React.FC = () => {
             <div className="p-4 border-b border-zinc-850 flex justify-between items-center bg-zinc-900/50 rounded-t-2xl">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Package className="h-5 w-5 text-purple-400" />
-                {t('addItem')}
+                {t('manageItems')}
               </h3>
               <button onClick={() => { setAddItemRoomId(null); setSearchQuery(''); }} className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer">
                 <X className="h-5 w-5" />
               </button>
             </div>
+
+            {/* Current session items with remove controls */}
+            {activeSessions[addItemRoomId]?.items.length > 0 && (
+              <div className="p-4 border-b border-zinc-850 bg-zinc-900/30">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3">{t('sessionItems')}</h4>
+                <div className="space-y-2 max-h-36 overflow-y-auto">
+                  {activeSessions[addItemRoomId].items.map(item => (
+                    <div key={item.itemId} className="flex items-center justify-between rounded-lg bg-zinc-950 border border-zinc-850 px-3 py-2">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm text-zinc-200 font-medium truncate block">
+                          {language === 'ar' ? item.nameArabic : item.nameEnglish}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono">
+                          {item.quantity}x @ ${item.sellingPrice.toFixed(2)} = ${(item.quantity * item.sellingPrice).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 ml-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => removeSessionItem(addItemRoomId, item.itemId, 1)}
+                          className="rounded-lg p-1.5 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-zinc-800 cursor-pointer"
+                          title={t('removeItem')}
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeSessionItem(addItemRoomId, item.itemId, item.quantity)}
+                          className="rounded-lg p-1.5 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-zinc-800 cursor-pointer"
+                          title={t('removeItem')}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div className="p-4 border-b border-zinc-850">
               <div className="relative">

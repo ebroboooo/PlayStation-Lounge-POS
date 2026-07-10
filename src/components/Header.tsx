@@ -6,7 +6,7 @@ import { Clock, Globe, Shield, RefreshCw, LogOut, Key } from 'lucide-react';
 import { ShiftModal } from './ShiftModal';
 
 export const Header: React.FC = () => {
-  const { currentShift, settings } = usePOS();
+  const { currentShift, settings, loading } = usePOS();
   const { t, language, setLanguage } = useTranslation();
   const { role, setRole } = useRole();
   const [time, setTime] = useState<string>('');
@@ -15,6 +15,13 @@ export const Header: React.FC = () => {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [roleToSwitch, setRoleToSwitch] = useState<EmployeeRole | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Start-of-day: auto-open shift modal when no shift is active after load
+  useEffect(() => {
+    if (!loading && !currentShift?.isOpen) {
+      setIsShiftModalOpen(true);
+    }
+  }, [loading, currentShift?.isOpen]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -76,9 +83,14 @@ export const Header: React.FC = () => {
         {currentShift?.isOpen ? (
           <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-4 py-1">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span className="text-xs font-semibold text-emerald-400">
-              {t('roleCashier')}: {t('Available')}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-emerald-400 leading-tight">
+                {t('shiftOpenSince')}: {new Date(currentShift.openTime).toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span className="text-[10px] text-zinc-400 font-mono">
+                {t('openingCash')}: ${currentShift.openingCash.toFixed(2)}
+              </span>
+            </div>
             <button
               onClick={() => setIsShiftModalOpen(true)}
               className="ml-2 text-[10px] text-zinc-300 hover:text-white underline"
@@ -146,7 +158,10 @@ export const Header: React.FC = () => {
 
       {/* Shift reconciliation modal */}
       {isShiftModalOpen && (
-        <ShiftModal onClose={() => setIsShiftModalOpen(false)} />
+        <ShiftModal
+          onClose={() => setIsShiftModalOpen(false)}
+          required={!currentShift?.isOpen}
+        />
       )}
 
       {/* Admin Password Prompt */}

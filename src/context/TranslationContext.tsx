@@ -118,6 +118,13 @@ const translations: TranslationDictionary = {
   endTime: { en: 'End Time', ar: 'وقت الانتهاء' },
   duration: { en: 'Duration', ar: 'المدة' },
   items: { en: 'Items', ar: 'الطلبات' },
+  removeItem: { en: 'Remove Item', ar: 'إزالة منتج' },
+  sessionItems: { en: 'Session Items', ar: 'منتجات الجلسة' },
+  manageItems: { en: 'Manage Items', ar: 'إدارة المنتجات' },
+  printAndCheckout: { en: 'Print & Checkout', ar: 'طباعة وإنهاء' },
+  checkoutWithoutPrinting: { en: 'Checkout Without Printing', ar: 'إنهاء بدون طباعة' },
+  checkoutSuccess: { en: 'Payment Completed Successfully!', ar: 'تم الدفع بنجاح!' },
+  finishAndClose: { en: 'Finish & Close', ar: 'إغلاق ومتابعة' },
 
   // Receipts & Printing
   receiptNumber: { en: 'Receipt Number', ar: 'رقم الفاتورة' },
@@ -136,6 +143,9 @@ const translations: TranslationDictionary = {
   expectedCash: { en: 'Expected Cash', ar: 'الكاش المتوقع' },
   cashDifference: { en: 'Cash Difference', ar: 'الفارق النقدي' },
   openShift: { en: 'Open Shift', ar: 'بدء مناوبة جديدة' },
+  startOfDay: { en: 'Start of Day', ar: 'بداية اليوم' },
+  startOfDayDesc: { en: 'Enter the opening cash amount in the drawer to begin operations.', ar: 'أدخل مبلغ الصندوق الافتتاحي لبدء العمليات.' },
+  shiftOpenSince: { en: 'Shift open', ar: 'الوردية مفتوحة' },
   closeShift: { en: 'Close Shift & Reconcile', ar: 'إغلاق المناوبة والمطابقة' },
   shiftSummary: { en: 'Shift Reconciliation Summary', ar: 'ملخص مطابقة العهدة' },
 

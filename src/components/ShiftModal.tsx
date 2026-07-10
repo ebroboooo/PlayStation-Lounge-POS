@@ -7,9 +7,10 @@ import { ReportService } from '../services/ReportService';
 
 interface ShiftModalProps {
   onClose: () => void;
+  required?: boolean;
 }
 
-export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose }) => {
+export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = false }) => {
   const { currentShift, openShift, closeShift } = usePOS();
   const { t, language } = useTranslation();
   const [openingInput, setOpeningInput] = useState<number>(0);
@@ -60,11 +61,15 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose }) => {
                 <Landmark className="h-7 w-7" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">{t('openShift')}</h3>
+                <h3 className="text-lg font-bold text-white">
+                  {required ? t('startOfDay') : t('openShift')}
+                </h3>
                 <p className="text-xs text-zinc-400">
-                  {language === 'ar' 
-                    ? 'أدخل مبلغ الصندوق الافتتاحي لبدء المعاملات النقشية.'
-                    : 'Initialize the cash drawer amount to start recorded transactions.'}
+                  {required ? t('startOfDayDesc') : (
+                    language === 'ar' 
+                      ? 'أدخل مبلغ الصندوق الافتتاحي لبدء المعاملات النقشية.'
+                      : 'Initialize the cash drawer amount to start recorded transactions.'
+                  )}
                 </p>
               </div>
             </div>
@@ -90,19 +95,21 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose }) => {
             </div>
 
             <div className="flex justify-end gap-3 border-t border-zinc-850 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-xl px-5 py-2.5 text-xs font-semibold text-zinc-400 hover:bg-zinc-900 transition-colors"
-              >
-                {t('cancel')}
-              </button>
+              {!required && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl px-5 py-2.5 text-xs font-semibold text-zinc-400 hover:bg-zinc-900 transition-colors"
+                >
+                  {t('cancel')}
+                </button>
+              )}
               <button
                 type="submit"
                 className="rounded-xl bg-purple-600 hover:bg-purple-500 text-white px-5 py-2.5 text-xs font-semibold transition-colors flex items-center gap-2"
               >
                 <Sparkles className="h-4 w-4" />
-                <span>{t('openShift')}</span>
+                <span>{required ? t('startOfDay') : t('openShift')}</span>
               </button>
             </div>
           </form>

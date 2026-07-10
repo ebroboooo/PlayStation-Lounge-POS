@@ -3,7 +3,7 @@ import { usePOS } from '../context/POSContext';
 import { useTranslation } from '../context/TranslationContext';
 import { Room, DiscountType, PaymentMethod, Receipt } from '../types';
 import { SessionService } from '../services/SessionService';
-import { DollarSign, Tag, Check, CreditCard, Wallet, Printer, Receipt as ReceiptIcon, X } from 'lucide-react';
+import { DollarSign, Check, CreditCard, Wallet, Printer, Receipt as ReceiptIcon, X, Minus, Trash2 } from 'lucide-react';
 
 interface CheckoutModalProps {
   room: Room;
@@ -11,17 +11,16 @@ interface CheckoutModalProps {
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) => {
-  const { activeSessions, checkoutSession, settings } = usePOS();
+  const { activeSessions, checkoutSession, removeSessionItem, settings } = usePOS();
   const { t, language } = useTranslation();
   
   const session = activeSessions[room.id];
-  if (!session) return null;
 
   // Local calculation states
-  const [discountVal, setDiscountVal] = useState<number>(session.discountValue || 0);
-  const [discountType, setDiscountType] = useState<DiscountType>(session.discountType || 'fixed');
+  const [discountVal, setDiscountVal] = useState<number>(() => session?.discountValue || 0);
+  const [discountType, setDiscountType] = useState<DiscountType>(() => session?.discountType || 'fixed');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [notes, setNotes] = useState<string>(session.notes || '');
+  const [notes, setNotes] = useState<string>(() => session?.notes || '');
   
   // Real-time calculation outputs
   const [roomCharges, setRoomCharges] = useState(0);
@@ -32,9 +31,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) =
   
   // After-checkout state for printing
   const [finalizedReceipt, setFinalizedReceipt] = useState<Receipt | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [pendingPrint, setPendingPrint] = useState(false);
 
   // Recalculate billing values
   useEffect(() => {
+    if (!session) return;
+
     // Inject local discount overrides temporarily
     const tempSession = {
       ...session,
@@ -49,13 +52,40 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) =
     setElapsedSec(charges.elapsedSeconds);
   }, [session, discountVal, discountType]);
 
-  const handleCheckout = async () => {
+  // Auto-print when Print & Checkout was selected
+  useEffect(() => {
+    if (!finalizedReceipt || !pendingPrint) return;
+    const timer = setTimeout(() => window.print(), 350);
+    return () => clearTimeout(timer);
+  }, [finalizedReceipt, pendingPrint]);
+
+  if (!session) return null;
+
+  const handleRemoveItem = async (itemId: string, quantity: number) => {
+    try {
+      await removeSessionItem(room.id, itemId, quantity);
+    } catch (err) {
+      console.error(err);
+      alert(language === 'ar' ? 'فشل إزالة المنتج!' : 'Failed to remove item!');
+    }
+  };
+
+  const handleCheckout = async (shouldPrint: boolean) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
       const receipt = await checkoutSession(room.id, discountVal, discountType, paymentMethod, notes);
-      setFinalizedReceipt(receipt);
+      if (shouldPrint) {
+        setPendingPrint(true);
+        setFinalizedReceipt(receipt);
+      } else {
+        onClose();
+      }
     } catch (err) {
       console.error(err);
       alert('Checkout failed!');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -125,11 +155,31 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) =
                   <h5 className="text-xs font-semibold text-zinc-400 mb-2">{t('items')}</h5>
                   <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
                     {session.items.map((item) => (
-                      <div key={item.itemId} className="flex justify-between text-xs font-mono">
-                        <span className="text-zinc-400">
+                      <div key={item.itemId} className="flex items-center justify-between text-xs font-mono gap-2">
+                        <span className="text-zinc-400 flex-1 min-w-0 truncate">
                           {quantityBadge(item.quantity)} {language === 'ar' ? item.nameArabic : item.nameEnglish}
                         </span>
-                        <span className="text-white">${(item.quantity * item.sellingPrice).toFixed(2)}</span>
+                        <span className="text-white shrink-0">${(item.quantity * item.sellingPrice).toFixed(2)}</span>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.itemId, 1)}
+                            disabled={isProcessing}
+                            className="rounded p-0.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer disabled:opacity-50"
+                            title={t('removeItem')}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.itemId, item.quantity)}
+                            disabled={isProcessing}
+                            className="rounded p-0.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer disabled:opacity-50"
+                            title={t('removeItem')}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -255,13 +305,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) =
                   <span className="text-xl text-purple-400 font-mono">${grandTotal.toFixed(2)}</span>
                 </div>
 
-                {/* Finalize checkout action */}
-                <button
-                  onClick={handleCheckout}
-                  className="mt-4 w-full rounded-xl bg-purple-600 hover:bg-purple-500 text-white py-3 text-xs font-bold transition-all shadow-lg shadow-purple-600/20 cursor-pointer"
-                >
-                  {t('checkout')}
-                </button>
+                {/* Finalize checkout actions */}
+                <div className="mt-4 grid grid-cols-1 gap-2">
+                  <button
+                    onClick={() => handleCheckout(true)}
+                    disabled={isProcessing}
+                    className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 text-white py-3 text-xs font-bold transition-all shadow-lg shadow-purple-600/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Printer className="h-4 w-4" />
+                    <span>{t('printAndCheckout')}</span>
+                  </button>
+                  <button
+                    onClick={() => handleCheckout(false)}
+                    disabled={isProcessing}
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white py-3 text-xs font-bold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {t('checkoutWithoutPrinting')}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -273,7 +334,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) =
             </div>
             <div>
               <h4 className="text-lg font-bold text-white">
-                {language === 'ar' ? 'تم الدفع بنجاح!' : 'Payment Completed Successfully!'}
+                {t('checkoutSuccess')}
               </h4>
               <p className="text-xs text-zinc-400 mt-1">
                 {language === 'ar' 
@@ -313,7 +374,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) =
                 onClick={onClose}
                 className="rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white px-6 py-3 text-xs font-bold cursor-pointer"
               >
-                {language === 'ar' ? 'إغلاق ومتابعة' : 'Finish & Close'}
+                {t('finishAndClose')}
               </button>
             </div>
 

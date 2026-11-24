@@ -177,7 +177,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
                       ? 'text-blue-400' 
                       : 'text-rose-400'
                 }`}>
-                  {tempDiff >= 0 ? `+$${tempDiff.toFixed(2)}` : `-$${Math.abs(tempDiff).toFixed(2)}`}
+                  {tempDiff >= 0 ? `+${tempDiff.toFixed(2)} ${settings.currency}` : `-${Math.abs(tempDiff).toFixed(2)} ${settings.currency}`}
                 </span>
               </div>
             </div>

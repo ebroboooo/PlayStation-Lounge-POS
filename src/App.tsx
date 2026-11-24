@@ -10,6 +10,7 @@ import { InventoryView } from './components/InventoryView';
 import { ReceiptsView } from './components/ReceiptsView';
 import { AuditLogsView } from './components/AuditLogsView';
 import { SettingsView } from './components/SettingsView';
+import { ExpensesView } from './components/ExpensesView';
 import { RefreshCw, Play, ShieldAlert } from 'lucide-react';
 
 const AppContent: React.FC = () => {
@@ -23,7 +24,7 @@ const AppContent: React.FC = () => {
     if (activeTab === 'auditLogs' && !canAccessAuditLogs) {
       setActiveTab('rooms');
     }
-    if (activeTab === 'settings' && !canChangeSettings) {
+    if ((activeTab === 'settings' || activeTab === 'expenses') && !canChangeSettings) {
       setActiveTab('rooms');
     }
   }, [role, activeTab, canAccessAuditLogs, canChangeSettings]);
@@ -53,6 +54,8 @@ const AppContent: React.FC = () => {
         return <ReceiptsView />;
       case 'auditLogs':
         return canAccessAuditLogs ? <AuditLogsView /> : <RoomsView />;
+      case 'expenses':
+        return canChangeSettings ? <ExpensesView /> : <RoomsView />;
       case 'settings':
         return canChangeSettings ? <SettingsView /> : <RoomsView />;
       default:

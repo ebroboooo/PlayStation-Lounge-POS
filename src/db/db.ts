@@ -152,9 +152,9 @@ export class IndexedDBManager {
     if (!settings) {
       // Seed default settings
       const defaultSettings: SystemSettings = {
-        businessName: 'Villa 30 PlayStation Lounge',
+        businessName: 'LoungeLink POS',
         currency: 'USD',
-        receiptFooter: 'Thank you for playing at Villa 30! Visit us again soon.',
+        receiptFooter: 'Thank you for playing! Visit us again soon.',
         language: 'en',
         theme: 'dark',
         printWidth: '80mm',

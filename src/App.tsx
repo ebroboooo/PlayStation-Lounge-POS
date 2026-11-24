@@ -34,7 +34,7 @@ const AppContent: React.FC = () => {
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-zinc-950 text-white gap-4">
         <RefreshCw className="h-10 w-10 text-purple-500 animate-spin" />
         <div className="text-center space-y-1">
-          <h2 className="text-md font-bold">VILLA 30</h2>
+          <h2 className="text-md font-bold">LoungeLink POS</h2>
           <p className="text-xs text-zinc-500 font-mono">Initializing IndexedDB & Seeding defaults...</p>
         </div>
       </div>

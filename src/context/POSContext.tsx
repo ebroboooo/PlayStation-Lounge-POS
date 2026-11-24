@@ -37,10 +37,9 @@ interface POSContextType {
   closeShift: (actualCash: number) => Promise<ShiftReport>;
   
   // Room Actions
-  startSession: (roomId: string, customerName?: string, limitMinutes?: number) => Promise<void>;
+  startSession: (roomId: string, customerName?: string) => Promise<void>;
   pauseSession: (roomId: string) => Promise<void>;
   resumeSession: (roomId: string) => Promise<void>;
-  addMinutes: (roomId: string, minutes: number) => Promise<void>;
   addSessionItem: (roomId: string, itemId: string, quantity: number) => Promise<void>;
   removeSessionItem: (roomId: string, itemId: string, quantity: number) => Promise<void>;
   updateSessionNotes: (roomId: string, notes: string) => Promise<void>;
@@ -81,9 +80,9 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [backups, setBackups] = useState<Backup[]>([]);
   const [settings, setSettings] = useState<SystemSettings>({
-    businessName: 'Villa 30 PlayStation Lounge',
+    businessName: 'LoungeLink POS',
     currency: 'USD',
-    receiptFooter: 'Thank you for playing at Villa 30! Visit us again soon.',
+    receiptFooter: 'Thank you for playing! Visit us again soon.',
     language: 'en',
     theme: 'dark',
     printWidth: '80mm',
@@ -211,8 +210,8 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Session Operations
-  const startSession = async (roomId: string, customerName?: string, limitMinutes?: number) => {
-    const session = await SessionService.startSession(roomId, customerName, limitMinutes, role);
+  const startSession = async (roomId: string, customerName?: string) => {
+    const session = await SessionService.startSession(roomId, customerName, undefined, role);
     setActiveSessions(prev => ({ ...prev, [roomId]: session }));
     await refreshRooms();
     await refreshLogs();
@@ -233,14 +232,6 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = await SessionService.resumeSession(session.id, role);
     setActiveSessions(prev => ({ ...prev, [roomId]: updated }));
     await refreshRooms();
-    await refreshLogs();
-  };
-
-  const addMinutes = async (roomId: string, minutes: number) => {
-    const session = activeSessions[roomId];
-    if (!session) return;
-    const updated = await SessionService.addMinutes(session.id, minutes, role);
-    setActiveSessions(prev => ({ ...prev, [roomId]: updated }));
     await refreshLogs();
   };
 
@@ -506,7 +497,6 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         startSession,
         pauseSession,
         resumeSession,
-        addMinutes,
         addSessionItem,
         removeSessionItem,
         updateSessionNotes,

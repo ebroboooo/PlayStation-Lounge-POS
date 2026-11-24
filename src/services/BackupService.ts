@@ -1,4 +1,5 @@
-import { Backup, Room, Session, InventoryItem, Receipt, AuditLog, SystemSettings } from '../types';
+import { Backup, Expense } from '../types';
+import { isExpense } from './ExpenseService';
 import { IndexedDBManager } from '../db/db';
 import { RoomRepository } from '../repositories/RoomRepository';
 import { SessionRepository } from '../repositories/SessionRepository';
@@ -20,7 +21,10 @@ export class BackupService {
     const receipts = await ReceiptRepository.getAll();
     const auditLogs = await AuditLogRepository.getAll();
 
+    const expenses = await IndexedDBManager.getAll<Expense>('expenses');
     const backupData = {
+      version: 2,
+      expenses,
       settings,
       rooms,
       sessions,
@@ -97,13 +101,20 @@ export class BackupService {
       throw new Error('Invalid backup file structure');
     }
 
+    // Legacy backups may be restored only when no expense history would be lost.
+    if (backupData.expenses === undefined) {
+      if ((await IndexedDBManager.getAll<Expense>('expenses')).length > 0) throw new Error('Older backup has no expenses; export current data and use a version 2 backup.');
+      backupData.expenses = [];
+    }
+    if (!Array.isArray(backupData.expenses) || !backupData.expenses.every(isExpense)) throw new Error('Invalid expense records in backup');
     // Validate record identities before touching the live database.
     const tables: [string, unknown[], string][] = [
       ['rooms', backupData.rooms, 'id'],
       ['sessions', backupData.sessions, 'id'],
       ['inventory', backupData.inventory, 'id'],
       ['receipts', backupData.receipts, 'receiptNumber'],
-      ['audit_logs', backupData.auditLogs, 'id']
+      ['audit_logs', backupData.auditLogs, 'id'],
+      ['expenses', backupData.expenses, 'id']
     ];
     if (typeof backupData.settings !== 'object' || Array.isArray(backupData.settings) ||
         typeof backupData.settings.businessName !== 'string' ||

@@ -97,37 +97,58 @@ export class BackupService {
       throw new Error('Invalid backup file structure');
     }
 
-    // Clear existing tables
-    await IndexedDBManager.clear('settings');
-    await IndexedDBManager.clear('rooms');
-    await IndexedDBManager.clear('sessions');
-    await IndexedDBManager.clear('inventory');
-    await IndexedDBManager.clear('receipts');
-    await IndexedDBManager.clear('audit_logs');
-
-    // Populate data
-    await SettingRepository.saveSettings(backupData.settings);
-    
-    for (const r of backupData.rooms) {
-      await RoomRepository.save(r);
+    // Validate record identities before touching the live database.
+    const tables: [string, unknown[], string][] = [
+      ['rooms', backupData.rooms, 'id'],
+      ['sessions', backupData.sessions, 'id'],
+      ['inventory', backupData.inventory, 'id'],
+      ['receipts', backupData.receipts, 'receiptNumber'],
+      ['audit_logs', backupData.auditLogs, 'id']
+    ];
+    if (typeof backupData.settings !== 'object' || Array.isArray(backupData.settings) ||
+        typeof backupData.settings.businessName !== 'string' ||
+        typeof backupData.settings.currency !== 'string' ||
+        !backupData.settings.statusColors) {
+      throw new Error('Invalid backup settings');
     }
-    for (const s of backupData.sessions) {
-      await SessionRepository.save(s);
-    }
-    for (const i of backupData.inventory) {
-      await InventoryRepository.save(i);
-    }
-    for (const rcpt of backupData.receipts) {
-      await ReceiptRepository.save(rcpt);
-    }
-    for (const log of backupData.auditLogs) {
-      await AuditLogRepository.save(log);
+    for (const [name, rows, key] of tables) {
+      const seen = new Set<string>();
+      for (const row of rows) {
+        const id = row && typeof row === 'object' ? (row as Record<string, unknown>)[key] : undefined;
+        if (typeof id !== 'string' || !id.trim() || seen.has(id)) {
+          throw new Error('Invalid or duplicate record key in ' + name);
+        }
+        seen.add(id);
+      }
     }
 
-    await AuditLogRepository.log(
-      role,
-      'Restore Backup',
-      `Restored system state from backup containing: ${backupData.rooms.length} rooms, ${backupData.inventory.length} inventory items, ${backupData.receipts.length} receipts.`
-    );
+    // Restore all stores atomically. A failed write rolls back every clear and put.
+    const db = await IndexedDBManager.getDB();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(['settings', ...tables.map(([name]) => name)], 'readwrite');
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error || new Error('Backup restoration aborted'));
+      try {
+        const settings = tx.objectStore('settings');
+        settings.clear();
+        settings.put(backupData.settings, 'current_settings');
+        for (const [name, rows] of tables) {
+          const store = tx.objectStore(name);
+          store.clear();
+          for (const row of rows) store.add(row);
+        }
+        tx.objectStore('audit_logs').add({
+          id: 'restore-' + crypto.randomUUID(),
+          timestamp: Date.now(),
+          employeeRole: role,
+          action: 'Restore Backup',
+          details: 'Restored ' + backupData.rooms.length + ' rooms, ' +
+            backupData.inventory.length + ' inventory items and ' + backupData.receipts.length + ' receipts.'
+        });
+      } catch (error) {
+        try { tx.abort(); } catch { /* already aborted */ }
+        reject(error);
+      }
+    });
   }
 }

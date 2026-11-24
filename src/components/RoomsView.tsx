@@ -333,7 +333,7 @@ export const RoomsView: React.FC = () => {
                     )}
 
                     {/* MAINTENANCE ACTIONS */}
-                    {isMaintenance && (
+                    {isMaintenance && canChangePricing && (
                       <button
                         onClick={async () => {
                           const updated = { ...room, status: 'Available' as RoomStatus };
@@ -346,13 +346,13 @@ export const RoomsView: React.FC = () => {
                     )}
 
                     {/* Room settings panel trigger */}
-                    <button
+                    {canChangePricing && <button
                       onClick={() => setEditingRoom(room)}
                       className="rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white p-2.5 transition-colors cursor-pointer"
                       title={t('renameRoom')}
                     >
                       <Settings className="h-4 w-4" />
-                    </button>
+                    </button>}
                   </div>
                 </div>
 
@@ -455,7 +455,7 @@ export const RoomsView: React.FC = () => {
       )}
 
       {/* Room detail Configuration side panel Drawer */}
-      {editingRoom && (
+      {editingRoom && canChangePricing && (
         <div className="fixed inset-y-0 right-0 z-50 w-96 bg-zinc-950 border-l border-zinc-800 shadow-2xl p-6 flex flex-col justify-between animate-in slide-in-from-right duration-250">
           <div className="space-y-6">
             <div className="flex justify-between items-center pb-3 border-b border-zinc-900">
@@ -483,6 +483,7 @@ export const RoomsView: React.FC = () => {
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   disabled={!canChangePricing}
                   value={editingRoom.hourlyRate}
                   onChange={(e) => setEditingRoom({ ...editingRoom, hourlyRate: parseFloat(e.target.value) || 0 })}
@@ -552,6 +553,7 @@ export const RoomsView: React.FC = () => {
                 </div>
                 <input
                   type="checkbox"
+                  disabled={editingRoom.status === 'Active' || editingRoom.status === 'Paused'}
                   checked={editingRoom.status === 'Maintenance'}
                   onChange={async (e) => {
                     const status = e.target.checked ? 'Maintenance' as RoomStatus : 'Available' as RoomStatus;
@@ -572,8 +574,8 @@ export const RoomsView: React.FC = () => {
             </button>
             <button
               onClick={async () => {
-                await updateRoomConfig(editingRoom);
-                setEditingRoom(null);
+                try { await updateRoomConfig(editingRoom); setEditingRoom(null); }
+                catch { alert(language === 'ar' ? 'تعذر حفظ إعدادات الغرفة' : 'Unable to save room settings'); }
               }}
               className="rounded-lg bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 text-xs font-bold cursor-pointer"
             >

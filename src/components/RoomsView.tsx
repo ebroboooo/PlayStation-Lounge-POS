@@ -15,8 +15,8 @@ import {
 
 export const RoomsView: React.FC = () => {
   const { 
-    rooms, inventory, activeSessions, currentShift,
-    startSession, pauseSession, resumeSession, addMinutes, 
+    rooms, inventory, activeSessions, currentShift, settings,
+    startSession, pauseSession, resumeSession, 
     addSessionItem, removeSessionItem, updateRoomConfig 
   } = usePOS();
   const { t, language } = useTranslation();
@@ -32,8 +32,6 @@ export const RoomsView: React.FC = () => {
   // Modal triggers
   const [selectedRoomForStart, setSelectedRoomForStart] = useState<Room | null>(null);
   const [customerName, setCustomerName] = useState('');
-  const [sessionType, setSessionType] = useState<'open' | 'limit'>('open');
-  const [limitMinutesVal, setLimitMinutesVal] = useState<number>(60);
   
   const [selectedRoomForCheckout, setSelectedRoomForCheckout] = useState<Room | null>(null);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -49,17 +47,11 @@ export const RoomsView: React.FC = () => {
     e.preventDefault();
     if (!selectedRoomForStart) return;
     
-    await startSession(
-      selectedRoomForStart.id, 
-      customerName, 
-      sessionType === 'limit' ? limitMinutesVal : undefined
-    );
+    await startSession(selectedRoomForStart.id, customerName);
     
     // Clear forms
     setSelectedRoomForStart(null);
     setCustomerName('');
-    setSessionType('open');
-    setLimitMinutesVal(60);
   };
 
   const getRoomIcon = (iconName: string) => {
@@ -154,7 +146,7 @@ export const RoomsView: React.FC = () => {
                       <div>
                         <h4 className="text-sm font-bold text-white leading-tight">{room.name}</h4>
                         <span className="text-[10px] text-zinc-400 font-medium tracking-wider">
-                          {t(room.category)} • ${room.hourlyRate}/hr
+                          {t(room.category)} • {room.hourlyRate.toFixed(2)} {settings.currency}/{language === 'ar' ? 'ساعة' : 'hr'}
                         </span>
                       </div>
                     </div>
@@ -273,26 +265,6 @@ export const RoomsView: React.FC = () => {
                     {/* ACTIVE ACTIONS */}
                     {isActive && (
                       <div className="w-full space-y-2">
-                        <div className="grid grid-cols-3 gap-1">
-                          <button
-                            onClick={() => addMinutes(room.id, 15)}
-                            className="rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 text-[10px] text-zinc-300 font-bold py-1.5 cursor-pointer"
-                          >
-                            +15m
-                          </button>
-                          <button
-                            onClick={() => addMinutes(room.id, 30)}
-                            className="rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 text-[10px] text-zinc-300 font-bold py-1.5 cursor-pointer"
-                          >
-                            +30m
-                          </button>
-                          <button
-                            onClick={() => addMinutes(room.id, 60)}
-                            className="rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 text-[10px] text-zinc-300 font-bold py-1.5 cursor-pointer"
-                          >
-                            +60m
-                          </button>
-                        </div>
                         <div className="flex gap-2">
                           <button
                             onClick={() => pauseSession(room.id)}
@@ -333,7 +305,7 @@ export const RoomsView: React.FC = () => {
                     )}
 
                     {/* MAINTENANCE ACTIONS */}
-                    {isMaintenance && (
+                    {isMaintenance && canChangePricing && (
                       <button
                         onClick={async () => {
                           const updated = { ...room, status: 'Available' as RoomStatus };
@@ -346,13 +318,13 @@ export const RoomsView: React.FC = () => {
                     )}
 
                     {/* Room settings panel trigger */}
-                    <button
+                    {canChangePricing && <button
                       onClick={() => setEditingRoom(room)}
                       className="rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white p-2.5 transition-colors cursor-pointer"
                       title={t('renameRoom')}
                     >
                       <Settings className="h-4 w-4" />
-                    </button>
+                    </button>}
                   </div>
                 </div>
 
@@ -388,52 +360,9 @@ export const RoomsView: React.FC = () => {
               />
             </div>
 
-            {/* Type selector */}
-            <div>
-              <label className="mb-2 block text-xs font-semibold text-zinc-400">{t('sessionType')}</label>
-              <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded-lg border border-zinc-850">
-                <button
-                  type="button"
-                  onClick={() => setSessionType('open')}
-                  className={`rounded py-1.5 text-xs font-semibold cursor-pointer ${sessionType === 'open' ? 'bg-zinc-800 text-white' : 'text-zinc-500'}`}
-                >
-                  {t('openTime')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSessionType('limit')}
-                  className={`rounded py-1.5 text-xs font-semibold cursor-pointer ${sessionType === 'limit' ? 'bg-zinc-800 text-white' : 'text-zinc-500'}`}
-                >
-                  {t('limitedTime')}
-                </button>
-              </div>
-            </div>
-
-            {/* Time selection input for limit session */}
-            {sessionType === 'limit' && (
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-zinc-400">{t('limitInMinutes')}</label>
-                <input
-                  type="number"
-                  min="5"
-                  value={limitMinutesVal}
-                  onChange={(e) => setLimitMinutesVal(parseInt(e.target.value) || 1)}
-                  className="w-full rounded-lg bg-zinc-950 px-3.5 py-2 text-sm text-white border border-zinc-850 font-mono focus:outline-none focus:ring-1 focus:ring-purple-500"
-                />
-                <div className="grid grid-cols-4 gap-1 mt-1.5">
-                  {[30, 60, 120, 180].map(mins => (
-                    <button
-                      key={mins}
-                      type="button"
-                      onClick={() => setLimitMinutesVal(mins)}
-                      className="rounded bg-zinc-900 hover:bg-zinc-850 text-[10px] text-zinc-400 py-1 border border-zinc-850 cursor-pointer"
-                    >
-                      {mins} min
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <p className="rounded-lg border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300">
+              {language === 'ar' ? 'الحساب حسب وقت اللعب الفعلي، مع استبعاد وقت الإيقاف المؤقت.' : 'Charges follow actual playing time. Paused time is excluded.'}
+            </p>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-zinc-850">
               <button
@@ -455,7 +384,7 @@ export const RoomsView: React.FC = () => {
       )}
 
       {/* Room detail Configuration side panel Drawer */}
-      {editingRoom && (
+      {editingRoom && canChangePricing && (
         <div className="fixed inset-y-0 right-0 z-50 w-96 bg-zinc-950 border-l border-zinc-800 shadow-2xl p-6 flex flex-col justify-between animate-in slide-in-from-right duration-250">
           <div className="space-y-6">
             <div className="flex justify-between items-center pb-3 border-b border-zinc-900">
@@ -483,6 +412,7 @@ export const RoomsView: React.FC = () => {
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   disabled={!canChangePricing}
                   value={editingRoom.hourlyRate}
                   onChange={(e) => setEditingRoom({ ...editingRoom, hourlyRate: parseFloat(e.target.value) || 0 })}
@@ -552,6 +482,7 @@ export const RoomsView: React.FC = () => {
                 </div>
                 <input
                   type="checkbox"
+                  disabled={editingRoom.status === 'Active' || editingRoom.status === 'Paused'}
                   checked={editingRoom.status === 'Maintenance'}
                   onChange={async (e) => {
                     const status = e.target.checked ? 'Maintenance' as RoomStatus : 'Available' as RoomStatus;
@@ -572,8 +503,8 @@ export const RoomsView: React.FC = () => {
             </button>
             <button
               onClick={async () => {
-                await updateRoomConfig(editingRoom);
-                setEditingRoom(null);
+                try { await updateRoomConfig(editingRoom); setEditingRoom(null); }
+                catch { alert(language === 'ar' ? 'تعذر حفظ إعدادات الغرفة' : 'Unable to save room settings'); }
               }}
               className="rounded-lg bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 text-xs font-bold cursor-pointer"
             >

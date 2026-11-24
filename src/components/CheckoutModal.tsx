@@ -346,7 +346,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) =
             {/* Print layout selector preview */}
             <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 max-w-sm mx-auto text-left space-y-2 no-print font-mono text-xs">
               <div className="text-center font-bold text-white border-b border-zinc-850 pb-2">
-                {settings?.businessName || 'Villa 30 Lounge'}
+                {settings?.businessName || 'LoungeLink POS'}
               </div>
               <div className="flex justify-between">
                 <span>RECEIPT:</span>
@@ -461,7 +461,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ room, onClose }) =
               {/* Footer */}
               <div className="border-t border-dashed border-black pt-4 text-center text-[10px] space-y-1">
                 <p>{settings.receiptFooter}</p>
-                <p>Villa 30 PlayStation Lounge POS</p>
+                <p>LoungeLink POS</p>
               </div>
             </div>
           </div>

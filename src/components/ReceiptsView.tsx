@@ -288,7 +288,7 @@ export const ReceiptsView: React.FC = () => {
 
             <div className="border-t border-dashed border-black pt-4 text-center text-[10px]">
               <p>{settings.receiptFooter}</p>
-              <p>Villa 30 PlayStation Lounge POS</p>
+              <p>LoungeLink POS</p>
             </div>
           </div>
         </div>

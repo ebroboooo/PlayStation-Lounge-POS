@@ -1,7 +1,7 @@
 import { Room, InventoryItem, SystemSettings } from '../types';
 
 const DB_NAME = 'Villa30POS';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export class IndexedDBManager {
   private static db: IDBDatabase | null = null;
@@ -18,12 +18,16 @@ export class IndexedDBManager {
 
       request.onsuccess = (event) => {
         this.db = (event.target as IDBOpenDBRequest).result;
+        this.db.onversionchange = () => { this.db?.close(); this.db = null; };
         resolve(this.db);
       };
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
 
+        if (!db.objectStoreNames.contains('expenses')) {
+          db.createObjectStore('expenses', { keyPath: 'id' });
+        }
         // Create Object Stores
         if (!db.objectStoreNames.contains('settings')) {
           db.createObjectStore('settings');
@@ -148,9 +152,9 @@ export class IndexedDBManager {
     if (!settings) {
       // Seed default settings
       const defaultSettings: SystemSettings = {
-        businessName: 'Villa 30 PlayStation Lounge',
+        businessName: 'LoungeLink POS',
         currency: 'USD',
-        receiptFooter: 'Thank you for playing at Villa 30! Visit us again soon.',
+        receiptFooter: 'Thank you for playing! Visit us again soon.',
         language: 'en',
         theme: 'dark',
         printWidth: '80mm',

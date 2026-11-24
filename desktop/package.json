@@ -1,0 +1,30 @@
+{
+  "name": "loungelink-pos-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline single-terminal LoungeLink POS for Windows",
+  "author": "International Software Studio",
+  "main": "main.cjs",
+  "scripts": {
+    "package:win": "electron-builder --win portable --x64 --publish never"
+  },
+  "build": {
+    "appId": "com.loungelink.pos",
+    "productName": "LoungeLink POS",
+    "directories": {
+      "output": "../release"
+    },
+    "files": [
+      "main.cjs",
+      "web/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": "portable"
+    },
+    "portable": {
+      "artifactName": "LoungeLink-POS-${version}-portable.${ext}"
+    }
+  }
+}

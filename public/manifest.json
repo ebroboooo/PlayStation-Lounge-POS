@@ -1,7 +1,7 @@
 {
-  "name": "Villa 30 PlayStation Lounge POS System",
-  "short_name": "Villa 30 POS",
-  "description": "Offline-first POS management system for Villa 30 PlayStation Lounge.",
+  "name": "LoungeLink POS",
+  "short_name": "LoungeLink POS",
+  "description": "Offline-first POS management system for LoungeLink POS.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",

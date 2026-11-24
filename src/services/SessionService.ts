@@ -176,37 +176,6 @@ export class SessionService {
     return session;
   }
 
-  public static async addMinutes(sessionId: string, minutes: number, role: 'admin' | 'cashier' = 'cashier'): Promise<Session> {
-    const session = await SessionRepository.getById(sessionId);
-    if (!session) throw new Error('Session not found');
-    if (session.status === 'completed') throw new Error('Session is completed');
-
-    const room = await RoomRepository.getById(session.roomId);
-    const roomName = room ? room.name : 'Unknown Room';
-
-    const charges = this.calculateCharges(session);
-    const elapsedMinutes = Math.floor(charges.elapsedSeconds / 60);
-
-    let oldLimit = session.limitMinutes;
-    if (session.limitMinutes && session.limitMinutes > 0) {
-      session.limitMinutes += minutes;
-    } else {
-      // Convert open session to a limited session
-      session.limitMinutes = elapsedMinutes + minutes;
-    }
-
-    session.lastUpdated = Date.now();
-    await SessionRepository.save(session);
-
-    await AuditLogRepository.log(
-      role,
-      'Add Minutes',
-      `Added ${minutes} minutes to session for ${roomName}. Limit changed from ${oldLimit || 'Open'} to ${session.limitMinutes} min.`
-    );
-
-    return session;
-  }
-
   public static async addSessionItem(
     sessionId: string,
     itemId: string,

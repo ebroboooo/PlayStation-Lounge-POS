@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Room, Session, InventoryItem, Receipt, AuditLog, SystemSettings, Backup, DiscountType, PaymentMethod, ShiftReport } from '../types';
+import { Expense, Room, Session, InventoryItem, Receipt, AuditLog, SystemSettings, Backup, DiscountType, PaymentMethod, ShiftReport } from '../types';
 import { IndexedDBManager } from '../db/db';
 import { RoomRepository } from '../repositories/RoomRepository';
 import { SessionRepository } from '../repositories/SessionRepository';
@@ -10,6 +10,7 @@ import { SettingRepository } from '../repositories/SettingRepository';
 import { SessionService } from '../services/SessionService';
 import { BackupService } from '../services/BackupService';
 import { ReportService } from '../services/ReportService';
+import { ExpenseService } from '../services/ExpenseService';
 import { useRole } from './RoleContext';
 
 interface ShiftState {
@@ -22,6 +23,8 @@ interface POSContextType {
   rooms: Room[];
   inventory: InventoryItem[];
   receipts: Receipt[];
+  expenses: Expense[];
+  recordExpense: (input: Pick<Expense, 'category' | 'source' | 'amount' | 'description'>) => Promise<void>;
   logs: AuditLog[];
   backups: Backup[];
   settings: SystemSettings;
@@ -34,10 +37,9 @@ interface POSContextType {
   closeShift: (actualCash: number) => Promise<ShiftReport>;
   
   // Room Actions
-  startSession: (roomId: string, customerName?: string, limitMinutes?: number) => Promise<void>;
+  startSession: (roomId: string, customerName?: string) => Promise<void>;
   pauseSession: (roomId: string) => Promise<void>;
   resumeSession: (roomId: string) => Promise<void>;
-  addMinutes: (roomId: string, minutes: number) => Promise<void>;
   addSessionItem: (roomId: string, itemId: string, quantity: number) => Promise<void>;
   removeSessionItem: (roomId: string, itemId: string, quantity: number) => Promise<void>;
   updateSessionNotes: (roomId: string, notes: string) => Promise<void>;
@@ -52,6 +54,7 @@ interface POSContextType {
   
   // Configuration
   updateRoomConfig: (room: Room) => Promise<void>;
+  updateRoomRate: (roomId: string, hourlyRate: number) => Promise<void>;
   bulkApplyRate: (rate: number) => Promise<void>;
   saveSettings: (settings: SystemSettings) => Promise<void>;
   
@@ -73,12 +76,13 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [backups, setBackups] = useState<Backup[]>([]);
   const [settings, setSettings] = useState<SystemSettings>({
-    businessName: 'Villa 30 PlayStation Lounge',
+    businessName: 'LoungeLink POS',
     currency: 'USD',
-    receiptFooter: 'Thank you for playing at Villa 30! Visit us again soon.',
+    receiptFooter: 'Thank you for playing! Visit us again soon.',
     language: 'en',
     theme: 'dark',
     printWidth: '80mm',
@@ -107,6 +111,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         const dbReceipts = await ReceiptRepository.getAll();
         setReceipts(dbReceipts);
+        setExpenses(await ExpenseService.getAll());
 
         const dbLogs = await AuditLogRepository.getAll();
         setLogs(dbLogs);
@@ -164,8 +169,15 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const refreshLogs = async () => setLogs(await AuditLogRepository.getAll());
   const refreshBackups = async () => setBackups(await BackupService.getAllBackups());
 
+  const recordExpense = async (input: Pick<Expense, 'category' | 'source' | 'amount' | 'description'>) => {
+    const expense = await ExpenseService.record(input, role, !!currentShift?.isOpen);
+    setExpenses(previous => [expense, ...previous]);
+    void refreshLogs().catch(console.error);
+  };
+
   // Shift Operations
   const openShift = async (openingCash: number) => {
+    if (!Number.isFinite(openingCash) || openingCash < 0) throw new Error('Opening cash must be zero or a positive amount');
     const newShift: ShiftState = {
       isOpen: true,
       openingCash,
@@ -180,7 +192,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const closeShift = async (actualCash: number): Promise<ShiftReport> => {
     if (!currentShift) throw new Error('No active shift');
     
-    const report = await ReportService.getCurrentShiftReport(currentShift.openingCash, actualCash);
+    const report = await ReportService.getCurrentShiftReport(currentShift.openingCash, actualCash, currentShift.openTime, await ExpenseService.getAll());
     
     // Log audit
     await AuditLogRepository.log(
@@ -198,8 +210,8 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Session Operations
-  const startSession = async (roomId: string, customerName?: string, limitMinutes?: number) => {
-    const session = await SessionService.startSession(roomId, customerName, limitMinutes, role);
+  const startSession = async (roomId: string, customerName?: string) => {
+    const session = await SessionService.startSession(roomId, customerName, undefined, role);
     setActiveSessions(prev => ({ ...prev, [roomId]: session }));
     await refreshRooms();
     await refreshLogs();
@@ -220,14 +232,6 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = await SessionService.resumeSession(session.id, role);
     setActiveSessions(prev => ({ ...prev, [roomId]: updated }));
     await refreshRooms();
-    await refreshLogs();
-  };
-
-  const addMinutes = async (roomId: string, minutes: number) => {
-    const session = activeSessions[roomId];
-    if (!session) return;
-    const updated = await SessionService.addMinutes(session.id, minutes, role);
-    setActiveSessions(prev => ({ ...prev, [roomId]: updated }));
     await refreshLogs();
   };
 
@@ -349,13 +353,42 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Configurations
   const updateRoomConfig = async (room: Room) => {
-    await RoomRepository.save(room);
+    if (role !== 'admin') throw new Error('Administrator access required');
+    if (!Number.isFinite(room.hourlyRate) || room.hourlyRate < 0 || room.hourlyRate > 1_000_000_000 || Math.abs(room.hourlyRate * 100 - Math.round(room.hourlyRate * 100)) > 0.0001) throw new Error('Invalid hourly rate');
+    const existing = await RoomRepository.getById(room.id);
+    if (!existing) throw new Error('Room not found');
+    const status = existing.status === 'Active' || existing.status === 'Paused' ? existing.status : (room.status === 'Maintenance' ? 'Maintenance' : 'Available');
+    await RoomRepository.save({ ...room, status });
     await refreshRooms();
     await AuditLogRepository.log(role, 'Edit Pricing', `Modified configurations for ${room.name} (${room.category}). Rate: $${room.hourlyRate}/hr.`);
     await refreshLogs();
   };
 
+  const updateRoomRate = async (roomId: string, hourlyRate: number) => {
+    if (role !== 'admin') throw new Error('Administrator access required');
+    if (!Number.isFinite(hourlyRate) || hourlyRate < 0 || hourlyRate > 1_000_000_000 || Math.abs(hourlyRate * 100 - Math.round(hourlyRate * 100)) > 0.0001) throw new Error('Invalid hourly rate');
+    const db = await IndexedDBManager.getDB();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(['rooms', 'audit_logs'], 'readwrite');
+      const store = tx.objectStore('rooms');
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error || new Error('Room rate update aborted'));
+      const request = store.get(roomId);
+      request.onsuccess = () => {
+        try {
+          const room = request.result as Room | undefined;
+          if (!room) { tx.abort(); return; }
+          store.put({ ...room, hourlyRate });
+          tx.objectStore('audit_logs').add({ id: 'rate-' + crypto.randomUUID(), timestamp: Date.now(), employeeRole: role, action: 'Edit Pricing', details: room.name + ': ' + room.hourlyRate + ' → ' + hourlyRate });
+        } catch { tx.abort(); }
+      };
+    });
+    await refreshRooms();
+    void refreshLogs().catch(console.error);
+  };
+
   const bulkApplyRate = async (rate: number) => {
+    if (role !== 'admin' || !Number.isFinite(rate) || rate < 0 || rate > 1_000_000_000) throw new Error('Invalid rate or access denied');
     const updatedRooms = rooms.map(r => ({ ...r, hourlyRate: rate }));
     for (const r of updatedRooms) {
       await RoomRepository.save(r);
@@ -406,6 +439,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRooms(await RoomRepository.getAll());
     setInventory(await InventoryRepository.getAll());
     setReceipts(await ReceiptRepository.getAll());
+    setExpenses(await ExpenseService.getAll());
     setLogs(await AuditLogRepository.getAll());
     setBackups(await BackupService.getAllBackups());
 
@@ -427,6 +461,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRooms(await RoomRepository.getAll());
     setInventory(await InventoryRepository.getAll());
     setReceipts(await ReceiptRepository.getAll());
+    setExpenses(await ExpenseService.getAll());
     setLogs(await AuditLogRepository.getAll());
     setBackups(await BackupService.getAllBackups());
 
@@ -449,6 +484,8 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rooms,
         inventory,
         receipts,
+        expenses,
+        recordExpense,
         logs,
         backups,
         settings,
@@ -460,13 +497,13 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         startSession,
         pauseSession,
         resumeSession,
-        addMinutes,
         addSessionItem,
         removeSessionItem,
         updateSessionNotes,
         updateSessionDiscounts,
         checkoutSession,
         updateRoomConfig,
+        updateRoomRate,
         bulkApplyRate,
         saveSettings,
         saveInventoryItem,

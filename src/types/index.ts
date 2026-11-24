@@ -59,7 +59,7 @@ export interface InventoryItem {
 }
 
 export interface Receipt {
-  receiptNumber: string; // V30-YYYY-000001
+  receiptNumber: string; // LL-YYYY-000001 (legacy V30 numbers retained)
   sessionId?: string;
   roomName: string;
   customerName?: string;
@@ -110,7 +110,21 @@ export interface Backup {
   data: string; // Compressed or raw JSON string of all tables
 }
 
+export type ExpenseCategory = 'electricity' | 'internet' | 'stock' | 'rent' | 'salary' | 'maintenance' | 'water' | 'other';
+export type ExpenseSource = 'drawer' | 'external';
+export interface Expense {
+  id: string;
+  category: ExpenseCategory;
+  source: ExpenseSource;
+  amount: number;
+  description: string;
+  timestamp: number;
+  createdAt: number;
+}
+
 export interface ShiftReport {
+  expenses: number;
+  drawerExpenses: number;
   openingCash: number;
   revenue: number;
   paymentBreakdown: {

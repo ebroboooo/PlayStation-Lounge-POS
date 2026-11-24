@@ -91,13 +91,16 @@ export class ReportService {
     };
   }
 
-  public static async getCurrentShiftReport(openingCash: number, actualCash: number): Promise<ShiftReport> {
+  public static async getCurrentShiftReport(openingCash: number, actualCash: number, shiftOpenedAt: number): Promise<ShiftReport> {
+    const now = Date.now();
+    if (!Number.isFinite(shiftOpenedAt) || shiftOpenedAt <= 0 || shiftOpenedAt > now) {
+      throw new Error('Invalid shift opening time');
+    }
+    if (!Number.isFinite(openingCash) || openingCash < 0 || !Number.isFinite(actualCash) || actualCash < 0) {
+      throw new Error('Cash amounts must be non-negative finite numbers');
+    }
     const receipts = await ReceiptRepository.getAll();
-    const todayMs = this.startOfDay(new Date());
-
-    // We calculate shift revenue based on today's receipts for simplicity,
-    // or since the last shift reset. Let's assume today's receipts.
-    const shiftReceipts = receipts.filter(r => r.timestamp >= todayMs);
+    const shiftReceipts = receipts.filter(r => r.timestamp >= shiftOpenedAt && r.timestamp <= now);
 
     let cashRevenue = 0;
     let cardRevenue = 0;

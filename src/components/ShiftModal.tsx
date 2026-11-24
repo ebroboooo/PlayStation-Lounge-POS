@@ -11,7 +11,7 @@ interface ShiftModalProps {
 }
 
 export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = false }) => {
-  const { currentShift, openShift, closeShift } = usePOS();
+  const { currentShift, openShift, closeShift, expenses, receipts, settings } = usePOS();
   const { t, language } = useTranslation();
   const [openingInput, setOpeningInput] = useState<number>(0);
   const [actualInput, setActualInput] = useState<number>(0);
@@ -20,18 +20,20 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
   // Live reconciliation stats while typing actual cash
   const [tempExpected, setTempExpected] = useState<number>(0);
   const [tempDiff, setTempDiff] = useState<number>(0);
+  const [tempDrawerExpenses, setTempDrawerExpenses] = useState(0);
 
   useEffect(() => {
     if (currentShift?.isOpen) {
       // Calculate expected cash in background
       const getStats = async () => {
-        const stats = await ReportService.getCurrentShiftReport(currentShift.openingCash, actualInput, currentShift.openTime);
+        const stats = await ReportService.getCurrentShiftReport(currentShift.openingCash, actualInput, currentShift.openTime, expenses);
         setTempExpected(stats.expectedCash);
         setTempDiff(stats.difference);
+        setTempDrawerExpenses(stats.drawerExpenses);
       };
       getStats();
     }
-  }, [currentShift, actualInput]);
+  }, [currentShift, actualInput, expenses, receipts]);
 
   const handleOpen = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +81,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
                 {t('openingCash')}
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-mono">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-mono">{settings.currency}</span>
                 <input
                   type="number"
                   step="0.01"
@@ -136,21 +138,22 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div className="rounded-xl bg-zinc-900 p-4 border border-zinc-800">
                 <p className="text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('openingCash')}</p>
-                <p className="text-lg font-extrabold text-white font-mono">${currentShift.openingCash.toFixed(2)}</p>
+                <p className="text-lg font-extrabold text-white font-mono">{currentShift.openingCash.toFixed(2)} {settings.currency}</p>
               </div>
               <div className="rounded-xl bg-zinc-900 p-4 border border-zinc-800">
                 <p className="text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('expectedCash')}</p>
-                <p className="text-lg font-extrabold text-blue-400 font-mono">${tempExpected.toFixed(2)}</p>
+                <p className="text-lg font-extrabold text-blue-400 font-mono">{tempExpected.toFixed(2)} {settings.currency}</p>
               </div>
             </div>
 
+            <p className="mb-4 text-sm text-rose-400">{language === 'ar' ? 'مصروفات من الدرج:' : 'Cash drawer expenses:'} {tempDrawerExpenses.toFixed(2)} {settings.currency}</p>
             {/* Input and live status */}
             <div className="mb-6">
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 {t('actualCash')}
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-mono">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-mono">{settings.currency}</span>
                 <input
                   type="number"
                   step="0.01"
@@ -215,7 +218,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
 
             <div className="rounded-xl bg-zinc-950 p-6 border border-zinc-850 font-mono text-xs text-zinc-300 space-y-4 shadow-inner">
               <div className="text-center border-b border-zinc-800 pb-3">
-                <h2 className="text-sm font-bold text-white">VILLA 30 PLAYSTATION LOUNGE</h2>
+                <h2 className="text-sm font-bold text-white">{settings.businessName}</h2>
                 <p className="text-[10px] text-zinc-500 mt-1">SHIFT RECONCILIATION REPORT</p>
                 <p className="text-[9px] text-zinc-600 mt-0.5">Date: {new Date().toLocaleString()}</p>
               </div>
@@ -223,43 +226,45 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
               <div className="space-y-2 border-b border-zinc-850 pb-3">
                 <div className="flex justify-between">
                   <span>Opening Cash:</span>
-                  <span className="text-white">${summaryReport.openingCash.toFixed(2)}</span>
+                  <span className="text-white">{summaryReport.openingCash.toFixed(2)} {settings.currency}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shift Revenue:</span>
-                  <span className="text-white">${summaryReport.revenue.toFixed(2)}</span>
+                  <span className="text-white">{summaryReport.revenue.toFixed(2)} {settings.currency}</span>
                 </div>
+                <div className="flex justify-between text-rose-400"><span>{language === 'ar' ? 'إجمالي المصروفات' : 'Total expenses'}</span><span>{summaryReport.expenses.toFixed(2)} {settings.currency}</span></div>
+                <div className="flex justify-between text-rose-400"><span>{language === 'ar' ? 'مصروفات الدرج' : 'Drawer expenses'}</span><span>{summaryReport.drawerExpenses.toFixed(2)} {settings.currency}</span></div>
               </div>
 
               <div className="space-y-2 border-b border-zinc-850 pb-3">
                 <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">Payment Breakdown</p>
                 <div className="flex justify-between text-zinc-400">
                   <span>- Cash:</span>
-                  <span>${summaryReport.paymentBreakdown.cash.toFixed(2)}</span>
+                  <span>{summaryReport.paymentBreakdown.cash.toFixed(2)} {settings.currency}</span>
                 </div>
                 <div className="flex justify-between text-zinc-400">
                   <span>- Card:</span>
-                  <span>${summaryReport.paymentBreakdown.card.toFixed(2)}</span>
+                  <span>{summaryReport.paymentBreakdown.card.toFixed(2)} {settings.currency}</span>
                 </div>
                 <div className="flex justify-between text-zinc-400">
                   <span>- Wallet:</span>
-                  <span>${summaryReport.paymentBreakdown.wallet.toFixed(2)}</span>
+                  <span>{summaryReport.paymentBreakdown.wallet.toFixed(2)} {settings.currency}</span>
                 </div>
               </div>
 
               <div className="space-y-2 pt-1">
                 <div className="flex justify-between font-bold">
                   <span>Expected Drawer Cash:</span>
-                  <span className="text-blue-400">${summaryReport.expectedCash.toFixed(2)}</span>
+                  <span className="text-blue-400">{summaryReport.expectedCash.toFixed(2)} {settings.currency}</span>
                 </div>
                 <div className="flex justify-between font-bold">
                   <span>Actual Counted Cash:</span>
-                  <span className="text-white">${summaryReport.actualCash.toFixed(2)}</span>
+                  <span className="text-white">{summaryReport.actualCash.toFixed(2)} {settings.currency}</span>
                 </div>
                 <div className="flex justify-between border-t border-zinc-850 pt-2 font-bold text-sm">
                   <span>Discrepancy:</span>
                   <span className={summaryReport.difference === 0 ? 'text-emerald-400' : summaryReport.difference > 0 ? 'text-blue-400' : 'text-rose-500'}>
-                    ${summaryReport.difference.toFixed(2)}
+                    {summaryReport.difference.toFixed(2)} {settings.currency}
                   </span>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePOS } from '../context/POSContext';
+import { CashFlowSummary } from './ExpensesView';
 import { useTranslation } from '../context/TranslationContext';
 import { ReportService, DashboardStats, StatisticsReport } from '../services/ReportService';
 import { DollarSign, Gamepad2, TrendingUp, Clock, Download, Printer } from 'lucide-react';
@@ -186,6 +187,8 @@ export const DashboardView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <CashFlowSummary />
 
       {/* Graphs and Payment breakdowns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

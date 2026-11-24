@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { verifyLocalAdmin } from '../services/LocalAdminService';
 
 export type EmployeeRole = 'admin' | 'cashier';
 
 interface RoleContextType {
   role: EmployeeRole;
   setRole: (role: EmployeeRole) => void;
+  unlockAdmin: (password: string) => Promise<boolean>;
   canChangePricing: boolean;
   canChangeSettings: boolean;
   canAccessAuditLogs: boolean;
@@ -14,14 +16,18 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setRoleState] = useState<EmployeeRole>(() => {
-    const saved = localStorage.getItem('v30_pos_role');
-    return (saved as EmployeeRole) || 'cashier';
-  });
+  // Reload always locks privileged operations.
+  const [role, setRoleState] = useState<EmployeeRole>('cashier');
 
   const setRole = (newRole: EmployeeRole) => {
-    setRoleState(newRole);
-    localStorage.setItem('v30_pos_role', newRole);
+    if (newRole !== 'cashier') throw new Error('Use unlockAdmin to enter admin mode');
+    setRoleState('cashier');
+  };
+
+  const unlockAdmin = async (password: string): Promise<boolean> => {
+    if (!(await verifyLocalAdmin(password))) return false;
+    setRoleState('admin');
+    return true;
   };
 
   const isAdmin = role === 'admin';
@@ -31,6 +37,7 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         role,
         setRole,
+        unlockAdmin,
         canChangePricing: isAdmin,
         canChangeSettings: isAdmin,
         canAccessAuditLogs: isAdmin,

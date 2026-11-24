@@ -178,6 +178,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Shift Operations
   const openShift = async (openingCash: number) => {
+    if (!Number.isFinite(openingCash) || openingCash < 0) throw new Error('Opening cash must be zero or a positive amount');
     const newShift: ShiftState = {
       isOpen: true,
       openingCash,

@@ -4,16 +4,19 @@ import { useTranslation } from '../context/TranslationContext';
 import { useRole, EmployeeRole } from '../context/RoleContext';
 import { Clock, Globe, Shield, RefreshCw, LogOut, Key } from 'lucide-react';
 import { ShiftModal } from './ShiftModal';
+import { configureLocalAdmin, hasLocalAdmin } from '../services/LocalAdminService';
 
 export const Header: React.FC = () => {
   const { currentShift, settings, loading } = usePOS();
   const { t, language, setLanguage } = useTranslation();
-  const { role, setRole } = useRole();
+  const { role, setRole, unlockAdmin } = useRole();
   const [time, setTime] = useState<string>('');
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
   const [rolePassword, setRolePassword] = useState('');
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
-  const [roleToSwitch, setRoleToSwitch] = useState<EmployeeRole | null>(null);
+  const [setupAdmin, setSetupAdmin] = useState(false);
+  const [confirmation, setConfirmation] = useState('');
+  const [passwordBusy, setPasswordBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Start-of-day: auto-open shift modal when no shift is active after load
@@ -44,7 +47,8 @@ export const Header: React.FC = () => {
     if (newRole === role) return;
     if (newRole === 'admin') {
       setShowPasswordPrompt(true);
-      setRoleToSwitch('admin');
+      setSetupAdmin(!hasLocalAdmin());
+      setConfirmation('');
       setRolePassword('');
       setErrorMsg('');
     } else {
@@ -52,14 +56,29 @@ export const Header: React.FC = () => {
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (rolePassword === 'admin30') {
-      setRole('admin');
+    if (passwordBusy) return;
+    setPasswordBusy(true);
+    setErrorMsg('');
+    try {
+      if (setupAdmin) {
+        await configureLocalAdmin(rolePassword, confirmation);
+        setSetupAdmin(false);
+      }
+      if (!(await unlockAdmin(rolePassword))) {
+        setErrorMsg(language === 'ar' ? 'كلمة المرور خاطئة!' : 'Incorrect password.');
+        return;
+      }
       setShowPasswordPrompt(false);
-      setRoleToSwitch(null);
-    } else {
-      setErrorMsg(language === 'ar' ? 'كلمة المرور خاطئة!' : 'Incorrect Password!');
+      setRolePassword('');
+      setConfirmation('');
+    } catch {
+      setErrorMsg(language === 'ar'
+        ? 'تعذر التحقق. استخدم كلمة مرور متطابقة من ١٢ إلى ١٢٨ حرفاً واتصالاً محلياً آمناً.'
+        : 'Unable to verify. Use matching 12–128 character passwords and localhost or HTTPS.');
+    } finally {
+      setPasswordBusy(false);
     }
   };
 
@@ -180,7 +199,7 @@ export const Header: React.FC = () => {
                   {language === 'ar' ? 'التحقق من هوية المدير' : 'Admin Credentials'}
                 </h3>
                 <p className="text-sm font-bold text-amber-500 mt-1">
-                  {language === 'ar' ? 'كلمة المرور الافتراضية: admin30' : 'Default Password: admin30'}
+                  {setupAdmin ? (language === 'ar' ? 'على المالك إنشاء كلمة مرور خاصة به (١٢ حرفاً على الأقل).' : 'Owner setup: create your own password (12 characters minimum).') : (language === 'ar' ? 'أدخل كلمة مرور المدير.' : 'Enter your administrator password.')}
                 </p>
               </div>
             </div>
@@ -189,21 +208,27 @@ export const Header: React.FC = () => {
               <input
                 type="password"
                 required
+                autoComplete={setupAdmin ? 'new-password' : 'current-password'}
+                maxLength={128}
+                disabled={passwordBusy}
                 value={rolePassword}
                 onChange={(e) => setRolePassword(e.target.value)}
                 placeholder="••••••"
                 className="w-full rounded-lg bg-zinc-950 px-4 py-2 text-center text-lg tracking-widest text-white border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 autoFocus
               />
+              {setupAdmin && <input type="password" required autoComplete="new-password" maxLength={128} minLength={12} disabled={passwordBusy} value={confirmation} onChange={e => setConfirmation(e.target.value)} placeholder={language === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm password'} className="mt-2 w-full rounded-lg bg-zinc-950 px-4 py-2 text-white border border-zinc-800" />}
               {errorMsg && <p className="mt-2 text-xs text-red-500">{errorMsg}</p>}
             </div>
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
+                disabled={passwordBusy}
                 onClick={() => {
                   setShowPasswordPrompt(false);
-                  setRoleToSwitch(null);
+                  setRolePassword('');
+                  setConfirmation('');
                 }}
                 className="rounded-lg px-4 py-2 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 transition-colors"
               >
@@ -211,6 +236,7 @@ export const Header: React.FC = () => {
               </button>
               <button
                 type="submit"
+                disabled={passwordBusy}
                 className="rounded-lg bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 text-xs font-semibold transition-colors"
               >
                 {language === 'ar' ? 'تأكيد' : 'Confirm'}

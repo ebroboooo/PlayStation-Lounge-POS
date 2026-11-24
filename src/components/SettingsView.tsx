@@ -3,6 +3,7 @@ import { usePOS } from '../context/POSContext';
 import { useTranslation } from '../context/TranslationContext';
 import { useRole } from '../context/RoleContext';
 import { SystemSettings } from '../types';
+import { RoomPricing } from './RoomPricing';
 import { 
   Save, Database, Landmark, Palette, RefreshCw, 
   Trash2, Upload, Download, Sparkles, Check, 
@@ -11,7 +12,7 @@ import {
 
 export const SettingsView: React.FC = () => {
   const { 
-    settings, saveSettings, bulkApplyRate, backups, 
+    settings, saveSettings, backups, 
     createManualBackup, restoreBackup, deleteBackup, importBackupFile 
   } = usePOS();
   
@@ -27,12 +28,9 @@ export const SettingsView: React.FC = () => {
   // Status Colors state
   const [statusColors, setStatusColors] = useState({ ...settings.statusColors });
 
-  // Bulk rate apply state
-  const [bulkRateVal, setBulkRateVal] = useState<number>(10);
 
   // Alert Success triggers
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
-  const [bulkSuccessMsg, setBulkSuccessMsg] = useState('');
   const [backupSuccessMsg, setBackupSuccessMsg] = useState('');
 
   // File import reference
@@ -53,12 +51,6 @@ export const SettingsView: React.FC = () => {
     setTimeout(() => setSaveSuccessMsg(''), 3000);
   };
 
-  const handleBulkRateApply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await bulkApplyRate(bulkRateVal);
-    setBulkSuccessMsg(t('rateAppliedSuccess'));
-    setTimeout(() => setBulkSuccessMsg(''), 3000);
-  };
 
   const triggerCreateBackup = async () => {
     await createManualBackup();
@@ -209,40 +201,7 @@ export const SettingsView: React.FC = () => {
             </div>
           </form>
 
-          {/* Room Pricing Bulk Application Card */}
-          <form onSubmit={handleBulkRateApply} className="glass-panel rounded-2xl border border-zinc-800 p-5 space-y-4">
-            <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
-              <div className="rounded-lg bg-amber-500/10 p-2 text-amber-400">
-                <RefreshCw className="h-5 w-5" />
-              </div>
-              <h3 className="text-sm font-bold text-white">{t('bulkApplyRate')}</h3>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="flex-1">
-                <label className="mb-1 block text-xs font-semibold text-zinc-400">{t('hourlyRate')}</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-mono">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={bulkRateVal || ''}
-                    onChange={(e) => setBulkRateVal(parseFloat(e.target.value) || 0)}
-                    className="w-full rounded-lg bg-zinc-950 px-8 py-2 text-xs font-bold text-white border border-zinc-850 focus:outline-none"
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="rounded-xl bg-amber-600 hover:bg-amber-500 text-white px-5 py-2.5 text-xs font-bold cursor-pointer transition-colors"
-              >
-                {language === 'ar' ? 'تطبيق على الكل' : 'Apply to All'}
-              </button>
-            </div>
-            {bulkSuccessMsg && <p className="text-xs text-emerald-400 font-semibold">{bulkSuccessMsg}</p>}
-          </form>
+          <RoomPricing />
         </div>
 
         {/* Right: Database Backup Recovery Utilities */}

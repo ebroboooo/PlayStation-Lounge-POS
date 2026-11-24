@@ -5,7 +5,7 @@ import { useTranslation } from '../context/TranslationContext';
 import type { Room } from '../types';
 
 const RateRow: React.FC<{room: Room}> = ({room}) => {
-  const { updateRoomConfig, settings } = usePOS();
+  const { updateRoomRate, settings } = usePOS();
   const { language } = useTranslation();
   const ar = language === 'ar';
   const [rate, setRate] = useState(String(room.hourlyRate));
@@ -14,7 +14,7 @@ const RateRow: React.FC<{room: Room}> = ({room}) => {
   useEffect(() => { setRate(String(room.hourlyRate)); }, [room.hourlyRate]);
   return <form className="grid grid-cols-[minmax(0,1fr)_minmax(100px,1fr)_auto] gap-2 items-center border-t border-zinc-800 py-3" onSubmit={async e=>{
     e.preventDefault(); if(busy) return; setBusy(true); setStatus('');
-    try { await updateRoomConfig({...room,hourlyRate:Number(rate)}); setStatus(ar?'تم الحفظ':'Saved'); }
+    try { await updateRoomRate(room.id, Number(rate)); setStatus(ar?'تم الحفظ':'Saved'); }
     catch { setStatus(ar?'تعذر الحفظ. تحقق من السعر.':'Unable to save. Check rate.'); }
     finally { setBusy(false); }
   }}>

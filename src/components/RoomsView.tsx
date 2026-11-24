@@ -15,7 +15,7 @@ import {
 
 export const RoomsView: React.FC = () => {
   const { 
-    rooms, inventory, activeSessions, currentShift,
+    rooms, inventory, activeSessions, currentShift, settings,
     startSession, pauseSession, resumeSession, addMinutes, 
     addSessionItem, removeSessionItem, updateRoomConfig 
   } = usePOS();
@@ -154,7 +154,7 @@ export const RoomsView: React.FC = () => {
                       <div>
                         <h4 className="text-sm font-bold text-white leading-tight">{room.name}</h4>
                         <span className="text-[10px] text-zinc-400 font-medium tracking-wider">
-                          {t(room.category)} • ${room.hourlyRate}/hr
+                          {t(room.category)} • {room.hourlyRate.toFixed(2)} {settings.currency}/{language === 'ar' ? 'ساعة' : 'hr'}
                         </span>
                       </div>
                     </div>

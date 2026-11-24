@@ -9,7 +9,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { role, canAccessAuditLogs, canChangeSettings } = useRole();
 
   const menuItems = [
@@ -17,6 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'dashboard', label: t('dashboard'), icon: LayoutGrid, show: true },
     { id: 'inventory', label: t('inventory'), icon: Package, show: true },
     { id: 'receipts', label: t('receipts'), icon: Receipt, show: true },
+    { id: 'expenses', label: language === 'ar' ? 'المصروفات' : 'Expenses', icon: Receipt, show: canChangeSettings },
     { id: 'auditLogs', label: t('auditLogs'), icon: History, show: canAccessAuditLogs },
     { id: 'settings', label: t('settings'), icon: Settings, show: canChangeSettings },
   ];

@@ -91,7 +91,7 @@ export class ReportService {
     };
   }
 
-  public static async getCurrentShiftReport(openingCash: number, actualCash: number, shiftOpenedAt: number): Promise<ShiftReport> {
+  public static async getCurrentShiftReport(openingCash: number, actualCash: number, shiftOpenedAt: number, expenses: import('../types').Expense[] = []): Promise<ShiftReport> {
     const now = Date.now();
     if (!Number.isFinite(shiftOpenedAt) || shiftOpenedAt <= 0 || shiftOpenedAt > now) {
       throw new Error('Invalid shift opening time');
@@ -118,11 +118,16 @@ export class ReportService {
       }
     }
 
-    const expectedCash = openingCash + cashRevenue;
+    const shiftExpenses = expenses.filter(e => e.timestamp >= shiftOpenedAt && e.timestamp <= now);
+    const totalExpenses = shiftExpenses.reduce((n, e) => n + Math.round(e.amount * 100), 0) / 100;
+    const drawerExpenses = shiftExpenses.filter(e => e.source === 'drawer').reduce((n, e) => n + Math.round(e.amount * 100), 0) / 100;
+    const expectedCash = openingCash + cashRevenue - drawerExpenses;
     const difference = actualCash - expectedCash;
 
     return {
       openingCash,
+      expenses: totalExpenses,
+      drawerExpenses,
       revenue: Number(totalRevenue.toFixed(2)),
       paymentBreakdown: {
         cash: Number(cashRevenue.toFixed(2)),

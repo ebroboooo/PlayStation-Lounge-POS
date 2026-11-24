@@ -25,7 +25,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
     if (currentShift?.isOpen) {
       // Calculate expected cash in background
       const getStats = async () => {
-        const stats = await ReportService.getCurrentShiftReport(currentShift.openingCash, actualInput);
+        const stats = await ReportService.getCurrentShiftReport(currentShift.openingCash, actualInput, currentShift.openTime);
         setTempExpected(stats.expectedCash);
         setTempDiff(stats.difference);
       };

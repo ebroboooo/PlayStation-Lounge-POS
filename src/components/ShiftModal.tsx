@@ -87,7 +87,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
                   step="0.01"
                   required
                   min="0"
-                  value={openingInput || ''}
+                  value={openingInput}
                   onChange={(e) => setOpeningInput(parseFloat(e.target.value) || 0)}
                   placeholder="0.00"
                   className="w-full rounded-xl bg-zinc-950 px-10 py-3.5 text-lg font-bold text-white border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -159,7 +159,7 @@ export const ShiftModal: React.FC<ShiftModalProps> = ({ onClose, required = fals
                   step="0.01"
                   required
                   min="0"
-                  value={actualInput || ''}
+                  value={actualInput}
                   onChange={(e) => setActualInput(parseFloat(e.target.value) || 0)}
                   placeholder="0.00"
                   className="w-full rounded-xl bg-zinc-950 px-10 py-3.5 text-lg font-bold text-white border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-rose-500"

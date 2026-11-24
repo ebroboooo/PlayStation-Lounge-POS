@@ -55,6 +55,7 @@ interface POSContextType {
   
   // Configuration
   updateRoomConfig: (room: Room) => Promise<void>;
+  updateRoomRate: (roomId: string, hourlyRate: number) => Promise<void>;
   bulkApplyRate: (rate: number) => Promise<void>;
   saveSettings: (settings: SystemSettings) => Promise<void>;
   
@@ -371,6 +372,29 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await refreshLogs();
   };
 
+  const updateRoomRate = async (roomId: string, hourlyRate: number) => {
+    if (role !== 'admin') throw new Error('Administrator access required');
+    if (!Number.isFinite(hourlyRate) || hourlyRate < 0 || hourlyRate > 1_000_000_000 || Math.abs(hourlyRate * 100 - Math.round(hourlyRate * 100)) > 0.0001) throw new Error('Invalid hourly rate');
+    const db = await IndexedDBManager.getDB();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(['rooms', 'audit_logs'], 'readwrite');
+      const store = tx.objectStore('rooms');
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error || new Error('Room rate update aborted'));
+      const request = store.get(roomId);
+      request.onsuccess = () => {
+        try {
+          const room = request.result as Room | undefined;
+          if (!room) { tx.abort(); return; }
+          store.put({ ...room, hourlyRate });
+          tx.objectStore('audit_logs').add({ id: 'rate-' + crypto.randomUUID(), timestamp: Date.now(), employeeRole: role, action: 'Edit Pricing', details: room.name + ': ' + room.hourlyRate + ' → ' + hourlyRate });
+        } catch { tx.abort(); }
+      };
+    });
+    await refreshRooms();
+    void refreshLogs().catch(console.error);
+  };
+
   const bulkApplyRate = async (rate: number) => {
     if (role !== 'admin' || !Number.isFinite(rate) || rate < 0 || rate > 1_000_000_000) throw new Error('Invalid rate or access denied');
     const updatedRooms = rooms.map(r => ({ ...r, hourlyRate: rate }));
@@ -488,6 +512,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateSessionDiscounts,
         checkoutSession,
         updateRoomConfig,
+        updateRoomRate,
         bulkApplyRate,
         saveSettings,
         saveInventoryItem,

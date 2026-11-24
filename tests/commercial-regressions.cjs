@@ -60,3 +60,30 @@ test('local owner password is configured once and wrong passwords are rejected',
     delete globalThis.localStorage;
   }
 });
+
+
+test('drawer expenses reduce expected cash; outside payments do not', async () => {
+  const now = Date.now(), opening = now - 3600000;
+  const { ReportService } = loadTS('src/services/ReportService.ts', {
+    '../repositories/ReceiptRepository': { ReceiptRepository: { getAll: async () => [{ timestamp: now - 100, total: 500, paymentMethod: 'cash' }] } },
+    '../repositories/RoomRepository': { RoomRepository: {} }
+  });
+  const report = await ReportService.getCurrentShiftReport(200, 600, opening, [
+    { timestamp: now - 100, amount: 100, source: 'drawer' },
+    { timestamp: now - 100, amount: 300, source: 'external' },
+    { timestamp: opening - 1, amount: 999, source: 'drawer' }
+  ]);
+  assert.equal(report.expenses, 400);
+  assert.equal(report.drawerExpenses, 100);
+  assert.equal(report.expectedCash, 600);
+  assert.equal(report.difference, 0);
+});
+
+test('cash flow uses paid expenses once and excludes other periods', () => {
+  const { summarizeCashFlow, isExpense } = loadTS('src/services/ExpenseService.ts', { '../db/db': { IndexedDBManager: {} } });
+  const expense = { id:'test',category:'stock',source:'drawer',amount:250,description:'Stock',timestamp:100,createdAt:100 };
+  assert.equal(isExpense(expense), true);
+  assert.equal(isExpense({...expense,amount:-1}), false);
+  assert.equal(isExpense({...expense,amount:1.001}), false);
+  assert.deepEqual(summarizeCashFlow([{timestamp:100,total:1000},{timestamp:201,total:500}], [expense,{...expense,timestamp:99,amount:100}],100,200), {revenue:1000,expenses:250,drawerExpenses:250,net:750});
+});

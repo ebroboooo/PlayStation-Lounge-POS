@@ -19,9 +19,9 @@ export class ReceiptRepository {
   public static async getNextReceiptNumber(): Promise<string> {
     const receipts = await this.getAll();
     const currentYear = new Date().getFullYear();
-    const prefix = `V30-${currentYear}-`;
+    const prefix = `LL-${currentYear}-`;
 
-    const yearReceipts = receipts.filter(r => r.receiptNumber.startsWith(prefix));
+    const yearReceipts = receipts.filter(r => r.receiptNumber.startsWith(prefix) || r.receiptNumber.startsWith(`V30-${currentYear}-`));
     let nextIndex = 1;
 
     if (yearReceipts.length > 0) {
@@ -30,13 +30,13 @@ export class ReceiptRepository {
         const indexStr = parts[parts.length - 1];
         return parseInt(indexStr, 10);
       });
-      const maxIndex = Math.max(...indices);
+      const maxIndex = Math.max(0, ...indices.filter(Number.isFinite));
       if (!isNaN(maxIndex)) {
         nextIndex = maxIndex + 1;
       }
     }
 
-    // Format: V30-YYYY-000001
+    // Format: LL-YYYY-000001
     const indexStr = String(nextIndex).padStart(6, '0');
     return `${prefix}${indexStr}`;
   }

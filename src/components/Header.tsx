@@ -4,6 +4,7 @@ import { useTranslation } from '../context/TranslationContext';
 import { useRole, EmployeeRole } from '../context/RoleContext';
 import { Clock, Globe, Shield, RefreshCw, LogOut, Key } from 'lucide-react';
 import { ShiftModal } from './ShiftModal';
+import { ThemePicker } from './ThemePicker';
 import { configureLocalAdmin, hasLocalAdmin } from '../services/LocalAdminService';
 
 export const Header: React.FC = () => {
@@ -83,16 +84,16 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="glass-panel sticky top-0 z-40 flex h-16 w-full items-center justify-between px-6 border-b border-zinc-800">
+    <header className="glass-panel sticky top-0 z-40 flex min-h-16 w-full flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-zinc-800">
       {/* Brand Logo & Name */}
       <div className="flex items-center gap-3">
         <img src="/logo.svg" alt="Logo" className="h-9 w-9 animate-pulse" />
         <div>
           <h1 className="text-lg font-bold tracking-wider text-white">
-            {settings?.businessName || 'Villa 30'}
+            LoungeLink POS
           </h1>
           <p className="text-[10px] text-zinc-400 font-mono">
-            {t('dashboard')} • PWA ACTIVE
+            {settings?.businessName && settings.businessName !== 'LoungeLink POS' ? settings.businessName : (language === 'ar' ? 'إدارة صالات الألعاب' : 'Gaming lounge management')}
           </p>
         </div>
       </div>
@@ -134,12 +135,14 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Live Clock */}
         <div className="hidden sm:flex items-center gap-2 text-zinc-300 font-mono text-sm">
           <Clock className="h-4 w-4 text-purple-400" />
           <span>{time}</span>
         </div>
+
+        <ThemePicker />
 
         {/* Language Switcher */}
         <button

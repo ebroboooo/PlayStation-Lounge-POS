@@ -12,17 +12,17 @@
 
 body {
   margin: 0;
-  background-color: #09090b; /* Zinc 950 for premium dark mode default */
+  background-color: var(--color-zinc-950, #09090b);
   color: #f4f4f5; /* Zinc 100 */
   overflow-x: hidden;
 }
 
 /* Glassmorphism utility */
 .glass-panel {
-  background: rgba(24, 24, 27, 0.6); /* Zinc 900 at 60% */
+  background: color-mix(in srgb, var(--color-zinc-900, #18181b) 92%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(63, 63, 70, 0.4); /* Zinc 700 at 40% */
+  border: 1px solid color-mix(in srgb, var(--color-zinc-700, #3f3f46) 65%, transparent);
 }
 
 /* Custom scrollbar */
@@ -67,4 +67,29 @@ body {
     line-height: 1.4;
     color: #000;
   }
+}
+
+/* Customer-selectable low-glare palettes. Semantic status colors stay unchanged. */
+:root { color-scheme: dark; --color-zinc-850: #232327; }
+:root[data-appearance="midnight"] {
+  --color-zinc-950: #0d1728; --color-zinc-900: #17253b; --color-zinc-850: #203149;
+  --color-zinc-800: #293b54; --color-zinc-700: #40546e; --color-zinc-600: #60738c;
+  --color-zinc-500: #92a4bc; --color-zinc-400: #b0bfd4; --color-zinc-300: #d2deee;
+  --color-purple-400: #8cbaff; --color-purple-500: #4e88e9; --color-purple-600: #3569c7;
+}
+:root[data-appearance="slate"] {
+  --color-zinc-950: #232b33; --color-zinc-900: #303b46; --color-zinc-850: #374450;
+  --color-zinc-800: #435362; --color-zinc-700: #596c7d; --color-zinc-600: #718497;
+  --color-zinc-500: #b2c0ce; --color-zinc-400: #c1cdd8; --color-zinc-300: #e1e8ef;
+  --color-purple-400: #8ce4dc; --color-purple-500: #269e98; --color-purple-600: #16726e;
+}
+:root[data-appearance="warm"] {
+  --color-zinc-950: #211b18; --color-zinc-900: #302723; --color-zinc-850: #3b302a;
+  --color-zinc-800: #483a32; --color-zinc-700: #645143; --color-zinc-600: #8c7563;
+  --color-zinc-500: #b7a28e; --color-zinc-400: #d2beaa; --color-zinc-300: #eddfd1;
+  --color-purple-400: #f3c18e; --color-purple-500: #b97a40; --color-purple-600: #925628;
+}
+@media print {
+  :root { color-scheme: light; }
+  #receipt-print-area, #receipt-print-area * { color: #000 !important; background: transparent !important; box-shadow: none !important; }
 }

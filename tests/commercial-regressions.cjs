@@ -87,3 +87,25 @@ test('cash flow uses paid expenses once and excludes other periods', () => {
   assert.equal(isExpense({...expense,amount:1.001}), false);
   assert.deepEqual(summarizeCashFlow([{timestamp:100,total:1000},{timestamp:201,total:500}], [expense,{...expense,timestamp:99,amount:100}],100,200), {revenue:1000,expenses:250,drawerExpenses:250,net:750});
 });
+
+
+test('open sessions charge for actual play time, excluding pauses; legacy limits retain their terms', () => {
+  const { SessionService } = loadTS('src/services/SessionService.ts', {
+    '../repositories/SessionRepository': { SessionRepository: {} },
+    '../repositories/RoomRepository': { RoomRepository: {} },
+    '../repositories/InventoryRepository': { InventoryRepository: {} },
+    '../repositories/AuditLogRepository': { AuditLogRepository: {} }
+  });
+  const session = { status:'active', startTime:1000, duration:0, totalPausedDuration:600, hourlyRateAtStart:60, items:[], discountType:'fixed', discountValue:0 };
+  assert.equal(SessionService.calculateCharges(session, 1801000).roomCharges,20);
+  assert.equal(SessionService.calculateCharges({...session,limitMinutes:60},1801000).roomCharges,60);
+  assert.equal(typeof SessionService.addMinutes,'undefined');
+});
+
+test('receipt identifiers advance across legacy and LoungeLink prefixes', async () => {
+  const year = new Date().getFullYear();
+  const { ReceiptRepository } = loadTS('src/repositories/ReceiptRepository.ts', {
+    '../db/db': { IndexedDBManager: { getAll: async () => [{receiptNumber:'V30-'+year+'-000042',timestamp:1},{receiptNumber:'LL-'+year+'-000043',timestamp:2}] } }
+  });
+  assert.equal(await ReceiptRepository.getNextReceiptNumber(),'LL-'+year+'-000044');
+});

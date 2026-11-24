@@ -63,7 +63,7 @@ export const SettingsView: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `villa30_backup_${id}_${Date.now()}.json`;
+    link.download = `loungelink_backup_${id}_${Date.now()}.json`;
     link.click();
   };
 

@@ -59,7 +59,7 @@ export interface InventoryItem {
 }
 
 export interface Receipt {
-  receiptNumber: string; // V30-YYYY-000001
+  receiptNumber: string; // LL-YYYY-000001 (legacy V30 numbers retained)
   sessionId?: string;
   roomName: string;
   customerName?: string;

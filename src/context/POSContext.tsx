@@ -180,7 +180,7 @@ export const POSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const closeShift = async (actualCash: number): Promise<ShiftReport> => {
     if (!currentShift) throw new Error('No active shift');
     
-    const report = await ReportService.getCurrentShiftReport(currentShift.openingCash, actualCash);
+    const report = await ReportService.getCurrentShiftReport(currentShift.openingCash, actualCash, currentShift.openTime);
     
     // Log audit
     await AuditLogRepository.log(
